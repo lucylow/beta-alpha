@@ -1,0 +1,103 @@
+/** Static catalog for dashboard / Lovable integration (paths mirror logical API surface). */
+export const API_ENDPOINT_CATALOG = [
+  {
+    method: "GET" as const,
+    path: "/api/search",
+    title: "Search the web",
+    description: "Runs a query; returns 402 until payment is satisfied, then ranked results.",
+    auth: "x402 or policy approval",
+  },
+  {
+    method: "POST" as const,
+    path: "/api/search",
+    title: "Search (paid body)",
+    description: "Same as GET after payment: JSON with q, challenge_id, proof or paymentAuthorization.",
+    auth: "x402 or policy approval",
+  },
+  {
+    method: "GET" as const,
+    path: "/api/status",
+    title: "Service status",
+    description: "Health, network, mock mode, and feature flags for the inspector UI.",
+    auth: "none",
+  },
+  {
+    method: "POST" as const,
+    path: "/api/payment/authorize",
+    title: "Authorize payment (preview)",
+    description: "Creates a payment challenge without returning HTTP 402 — for transparent demos.",
+    auth: "none (creates requirement)",
+  },
+  {
+    method: "GET" as const,
+    path: "/api/logs",
+    title: "Request traces",
+    description: "Recent HTTP trace rows (endpoint, status, trace id, latency).",
+    auth: "none (demo server)",
+  },
+  {
+    method: "GET" as const,
+    path: "/api/demo-log",
+    title: "Demo narrative log",
+    description: "Human-readable payment and delivery events for the hackathon demo.",
+    auth: "none (demo server)",
+  },
+  {
+    method: "GET" as const,
+    path: "/api/wallet/balance",
+    title: "Wallet balance",
+    description:
+      "Horizon lookup: native XLM plus classic USDC trustline when present; includes rough 0.001-USDC search budget.",
+    auth: "none",
+  },
+  {
+    method: "GET" as const,
+    path: "/health/ready",
+    title: "Readiness probe",
+    description: "Horizon reachability plus search capability flags for deploy hooks and agents.",
+    auth: "none",
+  },
+  {
+    method: "GET" as const,
+    path: "/api/policy",
+    title: "Policy snapshot",
+    description: "Default approval, budget, and retry limits exposed for UI wiring.",
+    auth: "none",
+  },
+  {
+    method: "POST" as const,
+    path: "/api/demo/run",
+    title: "Inject demo traces",
+    description: "Appends sample trace rows so an empty inspector still tells a story.",
+    auth: "none (demo server)",
+  },
+  {
+    method: "POST" as const,
+    path: "/api/demo/reset",
+    title: "Reset demo state",
+    description: "Clears trace log, demo log, and in-memory payment challenges.",
+    auth: "none (demo server)",
+  },
+  {
+    method: "GET" as const,
+    path: "/api/wallets/kit",
+    title: "Stellar Wallets Kit bootstrap",
+    description:
+      "JSON for dashboards and agents: supported wallets, network, WalletConnect project id slot, npm package name.",
+    auth: "none",
+  },
+  {
+    method: "GET" as const,
+    path: "/api/compute",
+    title: "Paid compute stub",
+    description: "Dynamic micropayment by units (1–500); returns 402 then a deterministic digest for demos.",
+    auth: "x402",
+  },
+  {
+    method: "POST" as const,
+    path: "/api/compute",
+    title: "Paid compute (body)",
+    description: "First POST without challenge_id issues 402; paid POST includes op + challenge_id + proof.",
+    auth: "x402",
+  },
+];
