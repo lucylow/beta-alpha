@@ -15,6 +15,7 @@ import AgentsDashboard from "./pages/AgentsDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const SpecializedAgentsFramework = lazy(() => import("./pages/SpecializedAgentsFramework.tsx"));
+const FreeAiSetup = lazy(() => import("./pages/FreeAiSetup.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,20 @@ const App = () => (
                       }
                     >
                       <SpecializedAgentsFramework />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/free-ai-setup"
+                  element={
+                    <Suspense
+                      fallback={
+                        <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground text-sm">
+                          Loading guide…
+                        </div>
+                      }
+                    >
+                      <FreeAiSetup />
                     </Suspense>
                   }
                 />
