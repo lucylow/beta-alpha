@@ -1,8 +1,6 @@
-Below is a **fixed markdown version** with cleaner formatting and **improved technical diagrams**. I’ve preserved your content, removed the formatting issues, and converted the ASCII blocks into proper fenced diagrams and markdown structure.
 
-***
 
-# Project Overview
+# Stellar Hacks: Agents
 
 This repository is a full-stack platform for building agentic payment and coordination workflows on Stellar. It combines smart contracts, agent tooling, payment flows, and a developer-friendly UI so AI systems can pay for services, coordinate tasks, and settle onchain with predictable costs.
 
@@ -549,11 +547,3 @@ These features should be framed as future work, not prerequisites for the core r
 
 The repository should include a clear license and usage statement. If some parts are experimental or testnet-only, say so. If the project is intended for hackathon use, document that clearly too.
 
-It is also useful to explain which parts are production-ready and which parts are prototypes. That sets realistic expectations for other developers and users.
-
-***
-
-If you want, I can now turn this into:
-
-1. a **fully polished README.md** with badges, code fences, and a table of contents, or  
-2. a **much more technical version** with setup commands, API examples, and contract pseudocode.
