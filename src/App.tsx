@@ -12,6 +12,7 @@ import Index from "./pages/Index.tsx";
 import Marketplace from "./pages/Marketplace.tsx";
 import Dao from "./pages/Dao.tsx";
 import AgentsDashboard from "./pages/AgentsDashboard.tsx";
+import DappShell from "./pages/DappShell.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const SpecializedAgentsFramework = lazy(() => import("./pages/SpecializedAgentsFramework.tsx"));
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/dao" element={<Dao />} />
                 <Route path="/demo" element={<Demo />} />
                 <Route path="/agents" element={<AgentsDashboard />} />
+                <Route path="/app/*" element={<DappShell />} />
                 <Route
                   path="/specialized-agents"
                   element={
