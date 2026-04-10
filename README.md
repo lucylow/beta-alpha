@@ -1,6 +1,7 @@
 
 
-# Project Overview
+# AgentPay on Stellar
+
 
 This repository is a full-stack platform for building agentic payment and coordination workflows on Stellar. It combines smart contracts, agent tooling, payment flows, and a developer-friendly UI so AI systems can pay for services, coordinate tasks, and settle onchain with predictable costs.
 
