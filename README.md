@@ -575,15 +575,3 @@ The repository should include a clear license and usage statement. If some parts
 It is also useful to explain which parts are production-ready and which parts are prototypes. That sets realistic expectations for other developers and users.
 
 ***
-
-# Final Notes
-
-This README should communicate three things very clearly:
-
-- What the project does.
-- Why it matters.
-- How to run it.
-
-If those three are obvious, the rest of the document can focus on depth, implementation, and extension paths. The audience should leave with a strong understanding of how the system works and why Stellar is a good foundation for it.
-
-Would you like me to turn this into a **repo-ready README.md with polished markdown formatting and file sections**, or a **more developer-heavy version with setup commands, code blocks, and environment variable templates**?
