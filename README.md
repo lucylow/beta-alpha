@@ -1,10 +1,17 @@
 
 
-# Stellar Hacks: Agents
+# Stellar Hacks: Pay-per-Query Web Search MCP Server
 
-This repository is a full-stack platform for building agentic payment and coordination workflows on Stellar. It combines smart contracts, agent tooling, payment flows, and a developer-friendly UI so AI systems can pay for services, coordinate tasks, and settle onchain with predictable costs.
+### Problem: 
+AI agents need real-time search but monthly subscriptions waste money per query. API keys are fragile and require manual setup.
 
-The main design goal is to make payment-enabled agents feel native rather than bolted on. That means the system should support low-latency interactions, clear accounting, safe contract boundaries, and easy local development. It should also be straightforward to demo, extend, and reason about during a hackathon or production prototype.
+###  Solution: 
+An MCP server that lets Claude Code, Cursor, or any MCP client pay 0.001 USDC per Brave Search API call via x402. The server proxies the search, adds an x402 paywall, and settles micropayments on Stellar testnet. Solves a real pain (agent search billing), uses x402 natively, includes a working MCP server (demo-ready in 2 days), and directly matches the "concrete demand signal" from the inspiration tab.
+
+###  Key features: 
+MCP tools/search endpoint, x402 facilitator integration, Stellar testnet funding via Lab, 2-min video showing Claude paying for a search.
+
+
 
 ***
 
