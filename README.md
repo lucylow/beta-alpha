@@ -6,8 +6,7 @@
 AI agents need real-time search but monthly subscriptions waste money per query. API keys are fragile and require manual setup.
 
 ###  Solution: 
-An MCP server that lets Claude Code, Cursor, or any MCP client pay 0.001 USDC per Brave Search API call via x402. The server proxies the search, adds an x402 paywall, and settles micropayments on Stellar testnet. Solves a real pain (agent search billing), uses x402 natively, includes a working MCP server (demo-ready in 2 days), and directly matches the "concrete demand signal" from the inspiration tab.
-
+An MCP server that lets Claude Code, Cursor, or any MCP client pay 0.001 USDC per Brave Search API call via x402. The server proxies the search, adds an x402 paywall, and settles micropayments on Stellar testnet. Solves a real pain (agent search billing), uses x402 natively, includes a working MCP server (demo-ready in 2 days), and was inspired by the "concrete demand signal" idea.
 ###  Key features: 
 MCP tools/search endpoint, x402 facilitator integration, Stellar testnet funding via Lab, 2-min video showing Claude paying for a search.
 
