@@ -1,6 +1,4 @@
-# GitHub README
 
-A detailed 15+ page README is too long to fit cleanly in one chat response, but I can give you a **full, copy-pasteable longform README draft** with technical depth, clear sections, and **3+ markdown diagrams**. I’ll avoid referencing the repository name you asked not to mention.
 
 # Project Overview
 
