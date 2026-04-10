@@ -34,7 +34,6 @@ Each part is designed to be independently useful, but the real value comes from 
 
 # High-Level Architecture
 
-```markdown
 ```text
 +-------------------+       +-----------------------+       +----------------------+
 |  AI Agent / User  | ----> |  App / API Layer      | ----> | Stellar Smart       |
@@ -70,7 +69,6 @@ This layout keeps the codebase maintainable. It also makes it easier to swap one
 
 # Data Flow
 
-```markdown
 ```text
 User/Agent
    |
@@ -201,7 +199,6 @@ The UI should favor clarity over visual complexity. A polished but simple interf
 
 # Frontend Diagram
 
-```markdown
 ```text
 +------------------------------------------------------+
 |                    Frontend UI                       |
@@ -239,7 +236,6 @@ These tools let an agent discover what is available, pay for what it needs, and 
 
 # Agent Workflow Diagram
 
-```markdown
 ```text
 +-------------------+        +-------------------+        +-------------------+
 |   AI Agent        | -----> | Tool Interface    | -----> | Payment Handler   |
@@ -307,7 +303,6 @@ This model is especially useful for agent marketplaces because it reduces trust 
 
 # Escrow Diagram
 
-```markdown
 ```text
 Caller
   |
@@ -431,7 +426,6 @@ This is particularly important for demo environments. People trust a system more
 
 # Observability Diagram
 
-```markdown
 ```text
 +------------------+      +------------------+      +------------------+
 | User / Agent     | ---> | API / Service    | ---> | Chain / Contract |
