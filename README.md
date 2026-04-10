@@ -34,7 +34,6 @@ Each part is designed to be independently useful, but the real value comes from 
 
 # High-Level Architecture
 
-```text
 +-------------------+       +-----------------------+       +----------------------+
 |  AI Agent / User  | ----> |  App / API Layer      | ----> | Stellar Smart       |
 |  Cursor / Claude  |       |  Next.js / Node.js    |       | Contracts / Testnet |
@@ -45,8 +44,7 @@ Each part is designed to be independently useful, but the real value comes from 
          +-------------------> | Payment Middleware    | <-------------+
                               | x402 / Wallet Signing |
                               +-----------------------+
-```
-```
+
 
 This architecture separates experience, logic, and settlement. The app layer handles requests and UI, the payment middleware handles authorization and charging, and the chain layer stores the durable system state.
 
@@ -69,7 +67,7 @@ This layout keeps the codebase maintainable. It also makes it easier to swap one
 
 # Data Flow
 
-```text
+
 User/Agent
    |
    | 1. Request a paid service
@@ -91,8 +89,7 @@ Service Executor
    | 5. Return result to caller
    v
 UI / Agent Client
-```
-```
+
 
 This flow is intentionally simple. The caller starts with a request, the system determines whether payment is required, settlement happens, and the service result is released only after the required conditions are met.
 
@@ -199,7 +196,7 @@ The UI should favor clarity over visual complexity. A polished but simple interf
 
 # Frontend Diagram
 
-```text
+
 +------------------------------------------------------+
 |                    Frontend UI                       |
 +----------------------+-------------------------------+
@@ -208,8 +205,7 @@ The UI should favor clarity over visual complexity. A polished but simple interf
 | Contract View        | Activity Log                  |
 | Demo Controls        | Network / Testnet Indicator   |
 +----------------------+-------------------------------+
-```
-```
+
 
 This layout keeps the most important operational details visible at all times. It gives the user confidence that the system is doing something real and not just simulating a result.
 
@@ -389,7 +385,6 @@ Examples:
 - Payment thresholds.
 - Demo feature flags.
 
-The README should clearly explain each variable and whether it is required for local development, testnet deployment, or production use.
 
 ***
 
@@ -568,4 +563,4 @@ The repository should include a clear license and usage statement. If some parts
 
 It is also useful to explain which parts are production-ready and which parts are prototypes. That sets realistic expectations for other developers and users.
 
-***
+
