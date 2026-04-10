@@ -1,152 +1,591 @@
-# AgentPay on Stellar
+# GitHub README
 
-**AgentPay on Stellar** is a hackathon-grade stack for the **agentic economy**: paid agent services using **HTTP 402 / x402-style** payment challenges, **Stellar testnet** settlement (Horizon-verified native XLM in the reference path), **Freighter** signing, an optional **Soroban** registry + payer-authenticated settlement ledger, and an **MCP** server for Cursor / Claude Code.
+A detailed 15+ page README is too long to fit cleanly in one chat response, but I can give you a **full, copy-pasteable longform README draft** with technical depth, clear sections, and **3+ markdown diagrams**. I’ll avoid referencing the repository name you asked not to mention.
 
-| Layer | What it is |
-|--------|------------|
-| **Soroban** | `contracts/agent-pay` — agent registry, replay-safe `record_query_payment` (payer signs via Soroban auth). |
-| **Payment** | `server/src/x402.ts`, `horizonVerify.ts` — payment requirement JSON + memo; verifies payments against Horizon. |
-| **Agent** | Pay-per-query “search” API returning premium text after settlement (`/api/paid-search`). |
-| **App** | Vite + React demo at **`/demo`** — wallet panel, timeline, x402 display, tx link. |
-| **MCP** | `server/src/mcp-entry.ts` (stdio) — `list_agents`, `request_paid_search`, `check_demo_log`, `get_payment_template`, `check_contract_state`. |
+# Project Overview
 
-## Problem
+This repository is a full-stack platform for building agentic payment and coordination workflows on Stellar. It combines smart contracts, agent tooling, payment flows, and a developer-friendly UI so AI systems can pay for services, coordinate tasks, and settle onchain with predictable costs.
 
-AI agents hit a hard stop at **payments**: subscriptions and API keys do not map cleanly to autonomous tools. **Micropayments + explicit authorization** align better with per-call agent workflows.
+The main design goal is to make payment-enabled agents feel native rather than bolted on. That means the system should support low-latency interactions, clear accounting, safe contract boundaries, and easy local development. It should also be straightforward to demo, extend, and reason about during a hackathon or production prototype.
 
-## Why Stellar
+***
 
-Fast testnet iteration, low fees, native **asset** payments with **explicit memos** for challenge binding, and **Soroban** for policy/metadata and payer attestation patterns that complement off-chain verification.
+# Why This Exists
 
-## Architecture
+Agent systems often fail at the moment they need to pay for something. They can reason, choose tools, and generate actions, but the payment step usually requires extra integrations, manual billing, or fragile API keys. This project removes that friction by putting payment logic and service access under a unified protocol and contract architecture.
 
-```mermaid
-flowchart LR
-  subgraph Client
-    UI[Demo UI / MCP client]
-    F[Freighter]
-  end
-  subgraph AgentPay
-    API[Node API]
-    X402[x402 builder]
-    H[Horizon verify]
-  end
-  subgraph Stellar
-    HZ[Horizon]
-    SC[Soroban contract]
-  end
-  UI --> API
-  MCP --> API
-  API --> X402
-  UI --> F
-  F --> HZ
-  API --> H
-  H --> HZ
-  UI -. optional .-> SC
+Stellar is a strong fit because it offers low fees, fast settlement, native stablecoin support, and contract-level guardrails. That makes it practical for micropayments, request-based billing, and automated service access. The result is an architecture where agents can act economically, not just intellectually.
+
+***
+
+# Core Capabilities
+
+The platform is organized around a few core capabilities:
+
+- Pay-per-request service access.
+- Agent-to-agent payment workflows.
+- Smart contract-backed service registration.
+- Optional escrow and reputation tracking.
+- Wallet connection and signing.
+- Local developer experience with testnet support.
+- Clear observability through logs, dashboards, and transaction links.
+
+Each part is designed to be independently useful, but the real value comes from combining them into one flow. A user or agent requests a service, pays for access, receives the result, and the system records the interaction in a way that is auditable and extensible.
+
+***
+
+# High-Level Architecture
+
+```markdown
+```text
++-------------------+       +-----------------------+       +----------------------+
+|  AI Agent / User  | ----> |  App / API Layer      | ----> | Stellar Smart       |
+|  Cursor / Claude  |       |  Next.js / Node.js    |       | Contracts / Testnet |
++-------------------+       +-----------------------+       +----------------------+
+         |                              |                              |
+         |                              v                              |
+         |                    +-----------------------+               |
+         +-------------------> | Payment Middleware    | <-------------+
+                              | x402 / Wallet Signing |
+                              +-----------------------+
+```
 ```
 
-## Smart contract design
+This architecture separates experience, logic, and settlement. The app layer handles requests and UI, the payment middleware handles authorization and charging, and the chain layer stores the durable system state.
 
-See [`contracts/agent-pay/README.md`](contracts/agent-pay/README.md).
+***
 
-- **Registry**: priced agent rows (name, endpoint, category, `price_stroops`, reputation).
-- **Settlement ledger**: `record_query_payment` requires **`payer.require_auth()`**, enforces **`payment_ref`** uniqueness (replay protection), optional min amount vs list price, bumps reputation.
+# System Components
 
-The HTTP API does **not** replace the contract: production flow is **pay on-chain → verify memo/amount on Horizon → (optional) payer invokes `record_query_proof`** for auditability.
+The repository is typically divided into the following parts:
 
-## Payment flow (x402-style)
+- `contracts/` for Soroban smart contracts.
+- `server/` for payment and agent service endpoints.
+- `web/` for the frontend application.
+- `mcp/` for agent-accessible tooling.
+- `scripts/` for deployment, minting, or testnet setup.
+- `docs/` for diagrams, walkthroughs, and technical notes.
 
-1. `GET /api/paid-search?q=…` → **402** + JSON `payment` (Stellar testnet destination, stroops, **memo** embedding challenge id).
-2. Client builds/signs/submits **native payment** (Freighter in the demo UI; unsigned XDR from `GET /api/payment-xdr`).
-3. `POST /api/paid-search` with `{ q, challenge_id, proof: { payer, tx_hash } }` → server loads challenge, **verifies** tx on Horizon (or simulated mode), returns premium “search” payload.
+This layout keeps the codebase maintainable. It also makes it easier to swap one part without breaking the rest, which matters when you’re iterating fast.
 
-**Headers**: `Accept-Payment` is set on 402 responses (JSON serialized requirement).
+***
 
-## Setup
+# Data Flow
 
-### Prerequisites
-
-- Node 18+
-- Rust + Wasm target + **Stellar CLI** (for contract deploy) — see Stellar docs
-- **Freighter** (optional, for live path)
-
-### 1. API server
-
-```bash
-cd server
-cp .env.example .env
-# Edit PAYMENT_DESTINATION (testnet) or set DEMO_SIMULATED=true
-npm install
-npm run dev
+```markdown
+```text
+User/Agent
+   |
+   | 1. Request a paid service
+   v
+API Gateway / Service Router
+   |
+   | 2. Check access policy or payment requirement
+   v
+Payment Layer
+   |
+   | 3. Sign and submit payment authorization
+   v
+Stellar Network
+   |
+   | 4. Confirm settlement or contract state
+   v
+Service Executor
+   |
+   | 5. Return result to caller
+   v
+UI / Agent Client
+```
 ```
 
-### 2. Frontend
+This flow is intentionally simple. The caller starts with a request, the system determines whether payment is required, settlement happens, and the service result is released only after the required conditions are met.
 
-```bash
-npm install
-npm run dev
-# open http://localhost:8080/demo
+***
+
+# Smart Contract Layer
+
+The smart contract layer is responsible for canonical state. It should not depend on transient app state for important logic like ownership, service listing, escrow, reputation, or budget limits. The contract should be minimal, deterministic, and easy to audit.
+
+Typical onchain responsibilities include:
+
+- Registering services or agents.
+- Recording pricing metadata.
+- Tracking payment or escrow status.
+- Enforcing access control.
+- Storing trust or reputation markers.
+- Emitting events for offchain indexing.
+
+The contract should favor explicit methods and small state transitions. Avoid embedding complex business logic in a single method when it can be decomposed into smaller operations.
+
+***
+
+# Contract Design Principles
+
+The contract should follow these rules:
+
+- Every write path must be permissioned.
+- Every amount must be validated.
+- Every state transition must be deterministic.
+- Every external interaction must be inspectable.
+- Every method should have a single responsibility.
+- Every error should be explicit and typed.
+
+These rules keep the chain state clean and reduce the chance of bugs that are hard to diagnose later. They also make the code much easier to review in a hackathon or security audit setting.
+
+***
+
+# Contract Data Model
+
+A practical contract data model might include:
+
+- `services`: mapping of service IDs to metadata.
+- `owners`: mapping of service IDs to owners.
+- `balances`: mapping of user or agent balances.
+- `escrows`: mapping of payment IDs to locked funds.
+- `reputation`: mapping of service IDs to trust scores.
+- `policies`: mapping of wallet or account restrictions.
+
+The exact shape depends on the use case, but the underlying pattern is the same: one contract stores the canonical business state and enforces who can mutate it.
+
+***
+
+# Payment Middleware
+
+The payment middleware is the bridge between the caller and the chain. It can implement paywalls, authorization checks, payment receipts, and retries. If a request requires payment, the middleware should return a structured challenge or payment requirement.
+
+Good middleware should:
+
+- Identify the requested service.
+- Compute the required payment.
+- Build or validate authorization.
+- Route the payment to the correct destination.
+- Confirm settlement before releasing service output.
+- Produce a clean response that the frontend or agent can consume.
+
+This layer is especially important because it turns the contract into a practical product rather than a raw chain primitive.
+
+***
+
+# Payment Modes
+
+There are usually three useful payment modes:
+
+## 1. Per-request payment
+Each API call requires one payment. This is ideal for expensive or discrete services like search, data lookup, or agent tool access.
+
+## 2. Prepaid credit
+A wallet pre-funds an account and then spends from that balance over time. This is useful when repeated requests are expected.
+
+## 3. Streaming or session-based settlement
+A long-running session pays incrementally. This works well for AI inference, continuous compute, or frequent tool calls.
+
+The project can support one mode or all three, depending on scope. For a hackathon, per-request payment is usually the safest starting point.
+
+***
+
+# Frontend Experience
+
+The frontend should make the payment journey obvious. A user should be able to connect a wallet, select a service, see the payment requirement, approve the payment, and receive the result without confusion.
+
+Recommended UI sections:
+
+- Hero panel with project summary.
+- Wallet connection state.
+- Service catalog.
+- Payment challenge viewer.
+- Transaction status panel.
+- Contract state inspector.
+- Activity history and logs.
+
+The UI should favor clarity over visual complexity. A polished but simple interface is usually better for demos and reduces the chance of confusing the user.
+
+***
+
+# Frontend Diagram
+
+```markdown
+```text
++------------------------------------------------------+
+|                    Frontend UI                       |
++----------------------+-------------------------------+
+| Wallet Status        | Service Catalog               |
+| Payment State        | Tx Hash / Receipt             |
+| Contract View        | Activity Log                  |
+| Demo Controls        | Network / Testnet Indicator   |
++----------------------+-------------------------------+
+```
 ```
 
-Vite proxies `/api` → `http://127.0.0.1:8787`.
+This layout keeps the most important operational details visible at all times. It gives the user confidence that the system is doing something real and not just simulating a result.
 
-### 3. Soroban contract
+***
 
-```bash
-cd contracts/agent-pay
-cargo test
-# deploy with stellar-cli; then set CONTRACT_ID in server/.env
+# Agent Integration
+
+A major goal of the repository is to make services callable by AI agents. That means the system should expose a clean tool interface, either through an MCP server or a similar agent-accessible API layer.
+
+Useful agent tools include:
+
+- `list_services`
+- `inspect_service`
+- `request_service`
+- `approve_payment`
+- `check_tx_status`
+- `get_contract_state`
+- `submit_proposal`
+- `record_completion`
+
+These tools let an agent discover what is available, pay for what it needs, and continue the workflow without human intervention.
+
+***
+
+# Agent Workflow Diagram
+
+```markdown
+```text
++-------------------+        +-------------------+        +-------------------+
+|   AI Agent        | -----> | Tool Interface    | -----> | Payment Handler   |
+|   Planner         |        | MCP / API         |        | Authorization     |
++-------------------+        +-------------------+        +-------------------+
+                                                               |
+                                                               v
+                                                       +-------------------+
+                                                       | Stellar Contract  |
+                                                       | or Testnet Tx     |
+                                                       +-------------------+
+```
 ```
 
-### 4. MCP (optional)
+This diagram shows the crucial separation between planning and settlement. The agent decides what to do, but the payment and execution layer enforces the rules.
 
-With the API running:
+***
 
-```bash
-cd server
-AGENTPAY_API=http://127.0.0.1:8787 npm run mcp
+# Security Model
+
+Security should be a first-class concern, even in a hackathon project. The system should assume that callers can be malicious, impatient, or incorrect. The safest approach is to make every onchain or paid action explicit and auditable.
+
+Key protections should include:
+
+- Strict ownership checks.
+- Replay protection for paid requests.
+- Expiration for payment challenges.
+- Rate limiting for repeated calls.
+- Input validation for all numeric values.
+- Clear failure handling and rollback logic.
+
+If the platform manages funds or escrow, the contract should never trust the frontend to enforce the rules. All important enforcement must happen onchain or in verified server logic.
+
+***
+
+# Access Control
+
+Access control should be simple but strict. Some actions should be public, such as browsing services or viewing contract state. Other actions should require payment, wallet ownership, or contract-level authorization.
+
+Examples:
+
+- Public: service browsing, metadata lookup, transaction viewing.
+- Paid: premium API access, agent tool calls, data retrieval.
+- Restricted: service registration, price updates, withdrawal, contract admin actions.
+
+This makes the application easier to understand and reduces the risk of exposing sensitive operations to unauthorized users.
+
+***
+
+# Escrow and Settlement
+
+If the app includes escrow, the basic idea is to lock payment until a condition is met. That condition may be a successful service call, proof of delivery, a signed result, or a contract-approved state transition.
+
+A simple escrow flow looks like this:
+
+1. Caller deposits funds.
+2. Contract locks funds.
+3. Service is executed.
+4. Result is verified.
+5. Funds are released or refunded.
+
+This model is especially useful for agent marketplaces because it reduces trust assumptions between buyers and service providers.
+
+***
+
+# Escrow Diagram
+
+```markdown
+```text
+Caller
+  |
+  | deposit
+  v
+Escrow Contract
+  |
+  | lock funds
+  v
+Service Provider
+  |
+  | deliver result
+  v
+Verifier / Contract Rule
+  |
+  | release or refund
+  v
+Final Settlement
+```
 ```
 
-Wire the command into Cursor MCP settings using **stdio** (see `GET http://localhost:8787/api/mcp` for a machine-readable hint).
+This diagram captures the core trust-minimization idea. The contract becomes the neutral party that decides whether the service delivery was good enough to unlock payment.
 
-## Environment variables
+***
 
-| Variable | Purpose |
-|----------|---------|
-| `PAYMENT_DESTINATION` | G-address receiving native XLM (required if `DEMO_SIMULATED` is off). |
-| `QUERY_PRICE_STROOPS` | Price per query (default `100000`). |
-| `DEMO_SIMULATED` | `true` skips Horizon and accepts demo hashes (judging / no XLM). |
-| `CONTRACT_ID` | Optional Soroban contract (metadata / future RPC reads). |
-| `AGENTPAY_API` | Base URL for MCP stdio server. |
+# Reputation System
 
-## Demo walkthrough
+A reputation layer can be added to track service reliability. This is useful in agent markets where the quality of a service may vary over time. Reputation can be based on successful completions, failed calls, dispute outcomes, or user feedback.
 
-1. Start **server** then **frontend**.
-2. Open **`/demo`**.
-3. **Simulated**: ensure `DEMO_SIMULATED=true`, click **Run demo flow** — full 402 → POST without Freighter.
-4. **Testnet**: set **merchant** `PAYMENT_DESTINATION`, fund payer on testnet, connect **Freighter**, run demo — inspect tx on Stellar Expert.
+Possible reputation signals:
 
-## Real vs simulated
+- Number of successful deliveries.
+- Average response time.
+- Payment settlement history.
+- Refund frequency.
+- User ratings.
+- Contract-level attestations.
 
-| Component | Real | Simulated |
-|-----------|------|-----------|
-| HTTP 402 + challenge | Yes | Yes |
-| Horizon payment verify | When `DEMO_SIMULATED` unset + `PAYMENT_DESTINATION` set | Skipped |
-| Freighter sign + submit | User’s browser | N/A |
-| Soroban | After you deploy + call from CLI/wallet | Not auto-called from API in this MVP |
+The reputation layer should remain lightweight. It is best treated as a signal, not an absolute truth.
 
-## Limitations & extensions
+***
 
-- **USDC path**: current reference uses **native XLM** (stroops) for a minimal Horizon verification loop; USDC would use claimable balances or classic trustline payments with issuer/asset checks.
-- **MPP / sponsorship / contract accounts**: documented as natural extensions (fee sponsorship + policy accounts); not bundled here to keep the vertical slice coherent.
-- **Soroban invocation from UI**: add RPC + auth entries when `CONTRACT_ID` is set; wire `record_query_payment` after Horizon success.
+# Backend Services
 
-## Scripts
+The backend should expose practical endpoints rather than generic abstractions. Useful services include:
 
-- `npm run dev` — Vite app  
-- `npm run server:dev` — API + hot reload  
-- `cd server && npm test` — payment requirement unit test  
+- `GET /services`
+- `GET /services/:id`
+- `POST /request`
+- `POST /paywall`
+- `POST /settle`
+- `GET /status/:tx`
+- `GET /contract/:id`
+- `POST /agent/execute`
 
-## License
+Each endpoint should be documented and easy to test locally. That makes the repo much more valuable to other developers.
 
-Apache-2.0 (match Stellar ecosystem defaults unless your org requires otherwise).
+***
+
+# Local Development
+
+The project should be easy to run locally without too much setup. A good local experience usually includes:
+
+- Environment variable template.
+- Local testnet or devnet config.
+- Seed data for services and wallets.
+- Clear start commands.
+- Optional dockerized components.
+
+The goal is to let another developer clone the repository and see a meaningful demo quickly. That lowers the barrier to contribution and improves reliability.
+
+***
+
+# Configuration
+
+Use environment variables for all sensitive and environment-specific values. Avoid hardcoding private keys, contract IDs, RPC URLs, or service credentials.
+
+Examples:
+
+- Network selection.
+- Contract IDs.
+- Merchant account keys.
+- API tokens.
+- Payment thresholds.
+- Demo feature flags.
+
+The README should clearly explain each variable and whether it is required for local development, testnet deployment, or production use.
+
+***
+
+# Testing Strategy
+
+The test suite should focus on the most important flows:
+
+- Contract initialization.
+- Service registration.
+- Payment authorization.
+- Settlement verification.
+- Escrow release or refund.
+- Reputation updates.
+- Failure cases and invalid inputs.
+
+A practical test strategy usually combines contract unit tests, API integration tests, and a small end-to-end demo path. That gives confidence without overinvesting in exhaustive test coverage.
+
+***
+
+# Observability
+
+The repository should show what is happening. At minimum, it should expose:
+
+- Transaction hashes.
+- Payment events.
+- Service execution logs.
+- Contract state snapshots.
+- Error traces for failed requests.
+- A small activity feed in the UI.
+
+This is particularly important for demo environments. People trust a system more when they can see the state change in real time.
+
+***
+
+# Observability Diagram
+
+```markdown
+```text
++------------------+      +------------------+      +------------------+
+| User / Agent     | ---> | API / Service    | ---> | Chain / Contract |
++------------------+      +------------------+      +------------------+
+        |                        |                           |
+        v                        v                           v
++--------------------------------------------------------------+
+|                Logs / Events / Transaction Feed              |
++--------------------------------------------------------------+
+```
+```
+
+This structure makes debugging much easier. It also makes the demo more convincing because the audience can follow the action end to end.
+
+***
+
+# Deployment Model
+
+The deployment process should support at least two environments:
+
+- Local development.
+- Public testnet or preview network.
+
+Ideally, deployment should be scriptable. That means a single command or small sequence should build contracts, deploy them, start the server, and launch the frontend.
+
+You should document:
+
+- How to deploy contracts.
+- How to configure the server.
+- How to seed demo data.
+- How to connect a wallet.
+- How to verify a payment onchain.
+
+This makes the project feel complete and reproducible.
+
+***
+
+# Demo Story
+
+A good demo should tell one simple story very well. For example:
+
+1. Open the app.
+2. Connect a wallet.
+3. Choose a paid agent service.
+4. See the payment challenge.
+5. Approve payment.
+6. Receive the result.
+7. View the onchain trace.
+
+The entire flow should feel coherent and fast. Demos usually fail when they try to show too many features at once.
+
+***
+
+# Implementation Priorities
+
+If building from scratch, prioritize in this order:
+
+1. Contract state and core methods.
+2. Payment challenge and settlement logic.
+3. Wallet connection.
+4. End-to-end paid service flow.
+5. Activity logging and transaction display.
+6. Optional reputation or escrow enhancements.
+7. Visual polish and docs.
+
+This sequence ensures you have a working core before adding nice-to-have features.
+
+***
+
+# Common Pitfalls
+
+Avoid these common mistakes:
+
+- Making the contract too complex.
+- Treating the frontend as the source of truth.
+- Mixing demo state with canonical state.
+- Hiding payment logic behind unclear abstractions.
+- Under-documenting setup steps.
+- Overpromising unsupported features.
+
+A clean, honest, working system is usually better than an ambitious one that only works in theory.
+
+***
+
+# Contribution Guide
+
+If the repository is meant for collaboration, include a short contribution guide. It should cover:
+
+- How to run the project locally.
+- How to add a new service.
+- How to add a new contract method.
+- How to test payment flows.
+- How to propose changes.
+
+This makes the project easier to extend and keeps contributions aligned with the system design.
+
+***
+
+# Suggested README Sections
+
+A strong README should contain:
+
+- Project overview.
+- Motivation.
+- Architecture.
+- Smart contract design.
+- Payment flow.
+- Wallet integration.
+- Agent tooling.
+- Security model.
+- Testing.
+- Deployment.
+- Demo walkthrough.
+- Roadmap.
+
+That structure is long enough to be detailed and short enough to remain readable.
+
+***
+
+# Roadmap
+
+Possible future enhancements include:
+
+- Multi-service agent marketplace.
+- Session-based streaming payments.
+- Advanced escrow arbitration.
+- Service staking and slashing.
+- Richer reputation and trust scoring.
+- Dashboard analytics.
+- Multi-wallet support.
+- More agent tool integrations.
+
+These features should be framed as future work, not prerequisites for the core release.
+
+***
+
+# License and Usage
+
+The repository should include a clear license and usage statement. If some parts are experimental or testnet-only, say so. If the project is intended for hackathon use, document that clearly too.
+
+It is also useful to explain which parts are production-ready and which parts are prototypes. That sets realistic expectations for other developers and users.
+
+***
+
+# Final Notes
+
+This README should communicate three things very clearly:
+
+- What the project does.
+- Why it matters.
+- How to run it.
+
+If those three are obvious, the rest of the document can focus on depth, implementation, and extension paths. The audience should leave with a strong understanding of how the system works and why Stellar is a good foundation for it.
+
+Would you like me to turn this into a **repo-ready README.md with polished markdown formatting and file sections**, or a **more developer-heavy version with setup commands, code blocks, and environment variable templates**?
