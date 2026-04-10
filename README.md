@@ -1,7 +1,8 @@
+Below is a **fixed markdown version** with cleaner formatting and **improved technical diagrams**. I’ve preserved your content, removed the formatting issues, and converted the ASCII blocks into proper fenced diagrams and markdown structure.
 
+***
 
-# AgentPay on Stellar
-
+# Project Overview
 
 This repository is a full-stack platform for building agentic payment and coordination workflows on Stellar. It combines smart contracts, agent tooling, payment flows, and a developer-friendly UI so AI systems can pay for services, coordinate tasks, and settle onchain with predictable costs.
 
@@ -35,17 +36,21 @@ Each part is designed to be independently useful, but the real value comes from 
 
 # High-Level Architecture
 
-+-------------------+       +-----------------------+       +----------------------+
-|  AI Agent / User  | ----> |  App / API Layer      | ----> | Stellar Smart       |
-|  Cursor / Claude  |       |  Next.js / Node.js    |       | Contracts / Testnet |
-+-------------------+       +-----------------------+       +----------------------+
-         |                              |                              |
-         |                              v                              |
-         |                    +-----------------------+               |
-         +-------------------> | Payment Middleware    | <-------------+
-                              | x402 / Wallet Signing |
-                              +-----------------------+
+```mermaid
+flowchart LR
+    A[AI Agent / User<br/>Cursor / Claude] --> B[App / API Layer<br/>Next.js / Node.js]
+    B --> C[Payment Middleware<br/>x402 / Wallet Signing]
+    C --> D[Stellar Smart Contracts<br/>Soroban / Testnet]
 
+    B --> E[Service Executor]
+    E --> F[Response to Client]
+
+    C --> G[Settlement / Authorization]
+    G --> D
+
+    D --> H[(Onchain State)]
+    E --> I[(Logs / Metrics / Events)]
+```
 
 This architecture separates experience, logic, and settlement. The app layer handles requests and UI, the payment middleware handles authorization and charging, and the chain layer stores the durable system state.
 
@@ -68,29 +73,22 @@ This layout keeps the codebase maintainable. It also makes it easier to swap one
 
 # Data Flow
 
+```mermaid
+sequenceDiagram
+    participant U as User / Agent
+    participant G as API Gateway / Router
+    participant P as Payment Layer
+    participant S as Stellar Network
+    participant X as Service Executor
+    participant C as UI / Client
 
-User/Agent
-   |
-   | 1. Request a paid service
-   v
-API Gateway / Service Router
-   |
-   | 2. Check access policy or payment requirement
-   v
-Payment Layer
-   |
-   | 3. Sign and submit payment authorization
-   v
-Stellar Network
-   |
-   | 4. Confirm settlement or contract state
-   v
-Service Executor
-   |
-   | 5. Return result to caller
-   v
-UI / Agent Client
-
+    U->>G: Request paid service
+    G->>P: Check access policy / payment requirement
+    P->>S: Sign and submit payment authorization
+    S-->>P: Confirm settlement or contract state
+    P->>X: Allow execution
+    X-->>C: Return result to caller
+```
 
 This flow is intentionally simple. The caller starts with a request, the system determines whether payment is required, settlement happens, and the service result is released only after the required conditions are met.
 
@@ -165,12 +163,15 @@ This layer is especially important because it turns the contract into a practica
 There are usually three useful payment modes:
 
 ## 1. Per-request payment
+
 Each API call requires one payment. This is ideal for expensive or discrete services like search, data lookup, or agent tool access.
 
 ## 2. Prepaid credit
+
 A wallet pre-funds an account and then spends from that balance over time. This is useful when repeated requests are expected.
 
 ## 3. Streaming or session-based settlement
+
 A long-running session pays incrementally. This works well for AI inference, continuous compute, or frequent tool calls.
 
 The project can support one mode or all three, depending on scope. For a hackathon, per-request payment is usually the safest starting point.
@@ -197,16 +198,17 @@ The UI should favor clarity over visual complexity. A polished but simple interf
 
 # Frontend Diagram
 
-
-+------------------------------------------------------+
-|                    Frontend UI                       |
-+----------------------+-------------------------------+
-| Wallet Status        | Service Catalog               |
-| Payment State        | Tx Hash / Receipt             |
-| Contract View        | Activity Log                  |
-| Demo Controls        | Network / Testnet Indicator   |
-+----------------------+-------------------------------+
-
+```mermaid
+flowchart TB
+    UI[Frontend UI] --> WS[Wallet Status]
+    UI --> SC[Service Catalog]
+    UI --> PS[Payment State]
+    UI --> TR[Tx Hash / Receipt]
+    UI --> CV[Contract View]
+    UI --> AL[Activity Log]
+    UI --> DC[Demo Controls]
+    UI --> NW[Network / Testnet Indicator]
+```
 
 This layout keeps the most important operational details visible at all times. It gives the user confidence that the system is doing something real and not just simulating a result.
 
@@ -233,18 +235,19 @@ These tools let an agent discover what is available, pay for what it needs, and 
 
 # Agent Workflow Diagram
 
-```text
-+-------------------+        +-------------------+        +-------------------+
-|   AI Agent        | -----> | Tool Interface    | -----> | Payment Handler   |
-|   Planner         |        | MCP / API         |        | Authorization     |
-+-------------------+        +-------------------+        +-------------------+
-                                                               |
-                                                               v
-                                                       +-------------------+
-                                                       | Stellar Contract  |
-                                                       | or Testnet Tx     |
-                                                       +-------------------+
-```
+```mermaid
+sequenceDiagram
+    participant A as AI Agent
+    participant T as Tool Interface
+    participant P as Payment Handler
+    participant S as Stellar Contract / Tx
+
+    A->>T: Plan action
+    T->>P: Request payment or authorization
+    P->>S: Submit settlement / contract tx
+    S-->>P: Confirm state change
+    P-->>T: Return receipt / approval
+    T-->>A: Continue workflow
 ```
 
 This diagram shows the crucial separation between planning and settlement. The agent decides what to do, but the payment and execution layer enforces the rules.
@@ -300,25 +303,12 @@ This model is especially useful for agent marketplaces because it reduces trust 
 
 # Escrow Diagram
 
-```text
-Caller
-  |
-  | deposit
-  v
-Escrow Contract
-  |
-  | lock funds
-  v
-Service Provider
-  |
-  | deliver result
-  v
-Verifier / Contract Rule
-  |
-  | release or refund
-  v
-Final Settlement
-```
+```mermaid
+flowchart LR
+    C[Caller] -->|Deposit| E[Escrow Contract]
+    E -->|Lock Funds| S[Service Provider]
+    S -->|Deliver Result| V[Verifier / Contract Rule]
+    V -->|Release or Refund| F[Final Settlement]
 ```
 
 This diagram captures the core trust-minimization idea. The contract becomes the neutral party that decides whether the service delivery was good enough to unlock payment.
@@ -386,7 +376,6 @@ Examples:
 - Payment thresholds.
 - Demo feature flags.
 
-
 ***
 
 # Testing Strategy
@@ -422,16 +411,14 @@ This is particularly important for demo environments. People trust a system more
 
 # Observability Diagram
 
-```text
-+------------------+      +------------------+      +------------------+
-| User / Agent     | ---> | API / Service    | ---> | Chain / Contract |
-+------------------+      +------------------+      +------------------+
-        |                        |                           |
-        v                        v                           v
-+--------------------------------------------------------------+
-|                Logs / Events / Transaction Feed              |
-+--------------------------------------------------------------+
-```
+```mermaid
+flowchart TB
+    U[User / Agent] --> A[API / Service]
+    A --> C[Chain / Contract]
+
+    U --> L[Logs / Events / Transaction Feed]
+    A --> L
+    C --> L
 ```
 
 This structure makes debugging much easier. It also makes the demo more convincing because the audience can follow the action end to end.
@@ -564,4 +551,9 @@ The repository should include a clear license and usage statement. If some parts
 
 It is also useful to explain which parts are production-ready and which parts are prototypes. That sets realistic expectations for other developers and users.
 
+***
 
+If you want, I can now turn this into:
+
+1. a **fully polished README.md** with badges, code fences, and a table of contents, or  
+2. a **much more technical version** with setup commands, API examples, and contract pseudocode.
